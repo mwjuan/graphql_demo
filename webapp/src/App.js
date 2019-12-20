@@ -25,6 +25,10 @@ async function getUsers() {
 			users{
 				id
 				name
+				company{
+					id
+					name
+				}
 			}
 		}
 		`);
@@ -39,6 +43,10 @@ async function getUser(id) {
         user(id:"${id}"){
 					id
 					name
+					company{
+						id
+						name
+					}
 				}
       }
 		`);
@@ -53,7 +61,7 @@ async function addUser() {
    	   addUser(user: $u)
    	 }`,
 		{
-			u: { id: 'add', name: 'name' }
+			u: { id: 'add', name: 'name', company: { id: "add", name: "add" } }
 		});
 	getUsers();
 }
@@ -67,6 +75,7 @@ async function deleteUser(id) {
 }
 
 async function updateUser(id) {
+	let company = { id: "update", name: "update" };
 	await query(gql`
         mutation($id:String!, $user: UserInput!){
           updateUser(id: $id, user: $user)
@@ -74,7 +83,7 @@ async function updateUser(id) {
       `,
 		{
 			id,
-			user: { id, name: 'update' }
+			user: { id, name: 'update', company: company }
 		});
 	getUsers();
 }
@@ -86,7 +95,7 @@ function App() {
 			<button onClick={() => getUser("5")}> getUser id = 5</button>
 			<button onClick={() => addUser()}> addUser id=add name=add</button>
 			<button onClick={() => deleteUser("add")}> deleteUser id = add</button>
-			<button onClick={() => updateUser("2")}> updateUser id = 2 name= update</button>
+			<button onClick={() => updateUser("2")}> updateUser id = 2 name= update company:"id:update,name:update"</button>
 		</div>
 	);
 }

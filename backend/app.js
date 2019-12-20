@@ -4,20 +4,24 @@ const { ApolloServer, gql } = require('apollo-server-koa');
 const _ = require('lodash');
 
 const users = [];
+const companys = [];
 
 for (let index = 1; index < 30; index++) {
-	users.push({ id: index.toString(), name: "name" + index })
+	let c = { id: index.toString(), name: "company" + index };
+	companys.push(c);
+	users.push({ id: index.toString(), name: "name" + index, company: c.id })
 }
 
 const typeDefs = gql`
 	type Query {
     hello: String
-    users: [user]
-		user(id:String!):user
+    users: [User]
+		user(id:String!):User
   }
-  type user {
+  type User {
     id: String
 		name: String
+		company:Company
 	}
 	type Mutation {
 		addUser(user: UserInput!): Boolean
@@ -27,6 +31,15 @@ const typeDefs = gql`
 	input UserInput {
 		id: String
 		name: String
+		company: CompanyInput
+	}
+	type Company{
+		id:String
+		name:String
+	}
+	input CompanyInput{
+		id:String
+		name:String
 	}
 `;
 
@@ -36,6 +49,11 @@ const resolvers = {
 			return 'hi graphql';
 		},
 		users: async (parent, arg) => {
+			_.each(users, u => {
+				if (u.company && !u.company.id) {
+					u.company = _.find(companys, c => c.id === u.company);
+				}
+			})
 			return users;
 		},
 		user: async (parent, { id }) => {
@@ -44,20 +62,30 @@ const resolvers = {
 	},
 	Mutation: {
 		addUser: async (parent, { user }) => {
+			if (user.company) {
+				companys.push(user.company);
+			}
 			users.push(user);
 		},
 		deleteUser: async (parent, { id }) => {
 			_.remove(users, u => u.id === id);
 		},
 		updateUser: async (parent, { id, user }) => {
+			if (user.company) {
+				companys.push(user.company);
+			}
 			_.each(users, u => {
 				if (u.id === id) {
 					u.id = user.id;
 					u.name = user.name;
+					u.company = user.company;
 				}
 			})
-		}
+		},
 	},
+	Company: async (parent, args, context, info) => {
+		return _.find(company, c => c.id === parent.company);
+	}
 };
 
 const app = new Koa();
