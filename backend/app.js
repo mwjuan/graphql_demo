@@ -2,9 +2,12 @@ const Koa = require('koa');
 const cors = require('koa2-cors');
 const { ApolloServer, gql } = require('apollo-server-koa');
 const _ = require('lodash');
-
+const createGraphQLLogger = require('graphql-log');
+const { PubSub } = require('graphql-subscriptions');
+const debug = require('debug')('app')
 const users = [];
 const companys = [];
+const pubsub = new PubSub();
 
 for (let index = 1; index < 30; index++) {
 	let c = { id: index.toString(), name: "company" + index };
@@ -40,6 +43,9 @@ const typeDefs = gql`
 	input CompanyInput{
 		id:String
 		name:String
+	}
+	type Subscription {
+		changed:String
 	}
 `;
 
@@ -85,9 +91,21 @@ const resolvers = {
 	},
 	Company: async (parent, args, context, info) => {
 		return _.find(company, c => c.id === parent.company);
+	},
+	Subscription: {
+		changed: {
+			subscribe: () => {
+				debug('subscribe');
+				return pubsub.asyncIterator('changed');
+			}
+		}
 	}
 };
 
+const logExecutions = createGraphQLLogger({
+	logger: debug
+})
+logExecutions(resolvers);
 const app = new Koa();
 const apollo = new ApolloServer({
 	typeDefs,
@@ -97,4 +115,4 @@ const apollo = new ApolloServer({
 apollo.applyMiddleware({ app });
 
 app.use(cors())
-app.listen(9000);
+app.listen(10000);

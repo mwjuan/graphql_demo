@@ -7,7 +7,7 @@ let users = [], user = {};
 
 function createApolloClient() {
 	let result = new ApolloClient({
-		uri: `http://localhost:9000/graphql`,
+		uri: `http://localhost:10000/graphql`,
 	});
 	return result;
 }
